@@ -1,41 +1,41 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, window::PrimaryWindow};
+use player::PlayerPlugin;
 
-#[derive(Component)]
-struct Person;
+mod components;
+mod player;
+mod systems;
 
-#[derive(Component)]
-struct Name(String);
+// region:    --- Asset Constants
 
+// region:    --- Game Constants
+
+// region:    --- Resources
 #[derive(Resource)]
-struct GreetTimer(Timer);
+pub struct WinSize {
+    pub width: f32,
+    pub height: f32,
+}
 
 fn main() {
     App::new()
-        .add_plugins((DefaultPlugins,HelloPlugin))
+        .add_plugins(DefaultPlugins)
+        .add_plugins(PlayerPlugin)
+        .add_systems(Startup, setup_system)
         .run();
 }
 
-fn add_people(mut commands: Commands) {
-    commands.spawn((Person, Name("Elaina Proctor".to_string())));
-    commands.spawn((Person, Name("Renzo Hume".to_string())));
-    commands.spawn((Person, Name("Zayna Nieves".to_string())));
-    commands.spawn((Person, Name("Jermaine Lawrence".to_string())));
-}
+fn setup_system(
+    mut commands: Commands,
+    query: Query<&Window, With<PrimaryWindow>>,
+) {
+    commands.spawn(Camera2dBundle::default());
 
-fn greet_people(time: Res<Time>, mut timer: ResMut<GreetTimer>, query: Query<(&Person, &Name)>) {
-    if timer.0.tick(time.delta()).just_finished() {
-        for (_person, name) in &mut query.iter() {
-            println!("Hello {}!", name.0);
-        }
-    }
-}
-
-pub struct HelloPlugin;
-
-impl Plugin for HelloPlugin {
-    fn build(&self, app: &mut App) {
-        app.insert_resource(GreetTimer(Timer::from_seconds(2.0, TimerMode::Repeating)))
-            .add_systems(Startup, add_people)
-            .add_systems(Update, greet_people);
-    }
+    // Set up WinSize resource
+    // capture window size
+	let Ok(primary) = query.get_single() else {
+		return;
+	};
+	let (win_w, win_h) = (primary.width(), primary.height());
+    let win_size = WinSize {width: win_w, height: win_h}; 
+    commands.insert_resource(win_size);
 }
