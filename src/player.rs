@@ -1,8 +1,9 @@
 #![allow(unused)] // TODO: remove this
 
-use crate::components::{Player, Velocity};
+use crate::{components::{Player, Velocity}, PLAYER_MOVE_SPEED, WinSize};
 
 use bevy::{prelude::*, window::PrimaryWindow};
+use crate::components::Movable;
 
 pub struct PlayerPlugin;
 
@@ -13,41 +14,43 @@ impl Plugin for PlayerPlugin {
     }
 }
 
+fn setup(mut commands: Commands, 
+    window: Res<WinSize>,
+    asset_server: Res<AssetServer>,
+) {
+    commands.spawn((
+        SpriteBundle {
+            transform: Transform::from_xyz(window.width / 2.0, window.height / 2.0, 0.0),
+            texture: asset_server.load("sprites/wizard.png"),
+            ..Default::default()
+        },
+        Player {},
+        Velocity { x: 0., y: 0.},
+        Movable { speed: PLAYER_MOVE_SPEED, auto_despawn: false },
+    ));
+}
+
 fn player_movement_system(
     keyboard_input: Res<Input<KeyCode>>,
     mut query: Query<(&mut Velocity, With<Player>)>,
     time: Res<Time>,
 ) {
     if let Ok(mut velocity) = query.get_single_mut() {
-        let mut velocity = Vec2::ZERO;
+        let mut input = Vec2::ZERO;
         if keyboard_input.pressed(KeyCode::W) {
-            velocity += Vec2::Y;
+            input += Vec2::Y;
         }
         if keyboard_input.pressed(KeyCode::A) {
-            velocity -= Vec2::X;
+            input -= Vec2::X;
         }
         if keyboard_input.pressed(KeyCode::S) {
-            velocity -= Vec2::Y;
+            input -= Vec2::Y;
         }
         if keyboard_input.pressed(KeyCode::D) {
-            velocity += Vec2::X;
+            input += Vec2::X;
         }
-        velocity = velocity.normalize_or_zero();
+        input = input.normalize_or_zero();
+        velocity.0.x = input.x;
+        velocity.0.y = input.y;
     }
-}
-
-fn setup(mut commands: Commands, 
-    window_query: Query<&Window, With<PrimaryWindow>>,
-    asset_server: Res<AssetServer>,
-) {
-    let window = window_query.get_single().unwrap();
-
-    commands.spawn((
-        SpriteBundle {
-            transform: Transform::from_xyz(window.width() / 2.0, window.height() / 2.0, 0.0),
-            texture: asset_server.load("sprites/wizard.png"),
-            ..Default::default()
-        },
-        Player {},
-    ));
 }
