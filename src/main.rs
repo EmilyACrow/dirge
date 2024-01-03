@@ -1,4 +1,5 @@
 use bevy::{prelude::*, window::PrimaryWindow};
+use bevy_rapier2d::prelude::*;
 use player::PlayerPlugin;
 use systems::*;
 
@@ -43,6 +44,11 @@ fn setup_system(
         transform: Transform::from_xyz(win_w / 2.0, win_h / 2.0, 10.0),
         ..default()
     });
+
+    /* Create the ground. */
+    commands
+        .spawn(Collider::cuboid(500.0, 50.0))
+        .insert(TransformBundle::from(Transform::from_xyz(0.0, -100.0, 0.0)));
 
     
 }

@@ -1,24 +1,24 @@
 use bevy::prelude::*;
+use bevy_rapier2d::control::KinematicCharacterController;
 
-use crate::{components::{Velocity, Movable}, WinSize};
+use crate::{components::{Movable, InputDirection}, WinSize};
 
 pub fn movable_system(
     mut commands: Commands,
     time: Res<Time>,
     win_size: Res<WinSize>,
-    mut query: Query<(Entity, &Velocity, &mut Transform, &Movable)>,
+    mut player_query: Query<(&mut KinematicCharacterController, &InputDirection, &mut Transform, &Movable)>,
+    // mut query: Query<(Entity, &InputDirection, &mut Transform, &Movable)>,
 ) {
     let delta = time.delta_seconds();
 
-    for (entity, velocity, mut transform, movable) in &mut query {
-        let translation = &mut transform.translation;
-        translation.x += velocity.x * delta * movable.speed;
-        translation.y += velocity.y * delta * movable.speed;
-        if (velocity.x!=0. || velocity.y!= 0.) { println!("velocity x: {:?}, velocity y: {:?}", velocity.x, velocity.y); }
+    for (mut controller, input, mut transform, movable) in &mut player_query {
+        controller.translation = Some(input.direction);
+        //translation.y += direction.y * delta * movable.speed;
 
-        if movable.auto_despawn && (translation.x < 0.0 || translation.x > win_size.width
-                || translation.y < 0.0 || translation.y > win_size.height) {
-            commands.entity(entity).despawn();
-        }
+        // if movable.auto_despawn && (translation.x < 0.0 || translation.x > win_size.width
+        //         || translation.y < 0.0 || translation.y > win_size.height) {
+        //     commands.entity(entity).despawn();
+        // }
     }
 }
